@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ecopontos Itatiba</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&libraries=places"></script>
+  <style>
+    .marker {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      color: #10B981;
+      font-weight: bold;
+    }
+    .marker::after {
+      content: "●";
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div id="app" class="container mx-auto px-4 py-8 max-w-md">
+    <!-- Tela de Login -->
+    <div id="login-screen" class="text-center py-12">
+      <div class="bg-white rounded-2xl shadow-md p-8">
+        <div class="flex justify-center mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Bem-vindo ao Ecopontos</h1>
+        <p class="text-gray-600 mb-6">Ajude Itatiba a ser mais sustentável com o descarte correto de resíduos</p>
+        <button onclick="login()" class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition">
+          <i data-lucide="log-in"></i> Entrar / Cadastrar
+        </button>
+      </div>
+    </div>
+
+    <!-- Tela Principal -->
+    <div id="main-screen" class="hidden">
+      <header class="mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h1 class="text-2xl font-bold text-gray-800">Ecopontos Itatiba</h1>
+          <button onclick="logout()" class="text-sm text-gray-500 hover:text-gray-700">Sair</button>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="showScreen('map')" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition">
+            <i data-lucide="map-pin"></i> Mapa
+          </button>
+          <button onclick="showScreen('education')" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition">
+            <i data-lucide="book-open"></i> Educação
+          </button>
+        </div>
+      </header>
+
+      <!-- Tela do Mapa -->
+      <div id="map-screen">
+        <div id="map" class="h-64 w-full mb-4 rounded-2xl overflow-hidden bg-gray-200"></div>
+        
+        <div class="space-y-4">
+          <div class="bg-white rounded-2xl shadow p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <i data-lucide="search" class="text-gray-500"></i>
+              <input type="text" placeholder="Buscar ecoponto..." class="flex-1 border-none focus:ring-0 text-sm">
+            </div>
+          </div>
+          
+          <div id="ecopoints-list" class="space-y-4"></div>
+        </div>
+      </div>
+
+      <!-- Tela de Educação Ambiental -->
+      <div id="education-screen" class="hidden">
+        <div class="bg-white rounded-2xl shadow p-6">
+          <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <i data-lucide="book-open"></i> Educação Ambiental
+          </h2>
+          
+          <p class="text-gray-700 mb-4">Saiba como separar corretamente os resíduos:</p>
+          
+          <div class="space-y-4">
+            <div class="bg-green-50 rounded-lg p-4">
+              <h3 class="font-semibold text-green-700 flex items-center gap-2">
+                <i data-lucide="trash-2"></i> Plásticos
+              </h3>
+              <p class="text-sm text-gray-700 mt-1">Devem estar limpos e secos. Retire rótulos e resíduos de alimentos.</p>
+            </div>
+            
+            <div class="bg-green-50 rounded-lg p-4">
+              <h3 class="font-semibold text-green-700 flex items-center gap-2">
+                <i data-lucide="trash-2"></i> Vidros
+              </h3>
+              <p class="text-sm text-gray-700 mt-1">Embale cacos e objetos quebrados para evitar acidentes. Frascos devem estar limpos.</p>
+            </div>
+            
+            <div class="bg-green-50 rounded-lg p-4">
+              <h3 class="font-semibold text-green-700 flex items-center gap-2">
+                <i data-lucide="trash-2"></i> Orgânicos
+              </h3>
+              <p class="text-sm text-gray-700 mt-1">Use para compostagem quando possível. Evite desperdício de alimentos.</p>
+            </div>
+            
+            <div class="bg-green-50 rounded-lg p-4">
+              <h3 class="font-semibold text-green-700 flex items-center gap-2">
+                <i data-lucide="trash-2"></i> Eletrônicos
+              </h3>
+              <p class="text-sm text-gray-700 mt-1">Devem ser descartados em locais específicos. Nunca no lixo comum.</p>
+            </div>
+          </div>
+          
+          <button onclick="showScreen('map')" class="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition">
+            <i data-lucide="arrow-left"></i> Voltar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    
+    const ecopontos = [
+      {
+        id: 1,
+        nome: "Ecoponto Central",
+        endereco: "Rua das Flores, 123 - Centro, Itatiba/SP",
+        materiais: ["Plástico", "Papel", "Vidro", "Metal"],
+        horario: "Segunda a Sábado: 8h às 17h",
+        coordenadas: { lat: -23.005, lng: -46.846 },
+        telefone: "(11) 1234-5678"
+      },
+      {
+        id: 2,
+        nome: "Ecoponto Sul",
+        endereco: "Av. das Árvores, 987 - Vila Sul, Itatiba/SP",
+        materiais: ["Plástico", "Eletrônicos", "Metal", "Óleo de cozinha"],
+        horario: "Segunda a Sexta: 9h às 18h",
+        coordenadas: { lat: -23.012, lng: -46.851 },
+        telefone: "(11) 9876-5432"
+      },
+      {
+        id: 3,
+        nome: "Ecoponto Norte",
+        endereco: "Rua dos Pássaros, 456 - Jardim Norte, Itatiba/SP",
+        materiais: ["Papel", "Vidro", "Pilhas e Baterias", "Medicamentos"],
+        horario: "Terça a Domingo: 10h às 16h",
+        coordenadas: { lat: -22.998, lng: -46.840 },
+        telefone: "(11) 4567-8901"
+      }
+    ];
+
+    let map;
+    let markers = [];
+    let user = null;
+    let scheduledEcopoints = [];
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      if (user) {
+        showMainScreen();
+      } else {
+        document.getElementById('login-screen').classList.remove('hidden');
+      }
+    });
+
+    // Funções de autenticação
+    function login() {
+      user = {
+        id: 1,
+        name: "Usuário Exemplo",
+        email: "usuario@exemplo.com",
+        points: 120
+      };
+      showMainScreen();
+      initMap();
+      renderEcopointsList();
+    }
+
+    function logout() {
+      user = null;
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('main-screen').classList.add('hidden');
+    }
+
+    // Funções de navegação
+    function showMainScreen() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('main-screen').classList.remove('hidden');
+      showScreen('map');
+    }
+
+    function showScreen(screen) {
+      document.getElementById('map-screen').classList.add('hidden');
+      document.getElementById('education-screen').classList.add('hidden');
+      
+      if (screen === 'map') {
+        document.getElementById('map-screen').classList.remove('hidden');
+      } else if (screen === 'education') {
+        document.getElementById('education-screen').classList.remove('hidden');
+      }
+    }
+
+    // Funções do mapa
+    function initMap() {
+      const mapElement = document.getElementById('map');
+      const center = { lat: -23.003, lng: -46.846 };
+      
+      map = new google.maps.Map(mapElement, {
+        center: center,
+        zoom: 14,
+        styles: [
+          {
+            featureType: "poi",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }]
+          }
+        ]
+      });
+      
+      // Adicionar marcadores
+      ecopontos.forEach(ecoponto => {
+        const marker = new google.maps.Marker({
+          position: ecoponto.coordenadas,
+          map: map,
+          title: ecoponto.nome,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: '#10B981',
+            fillOpacity: 1,
+            strokeColor: '#FFFFFF',
+            strokeWeight: 2,
+            scale: 8
+          }
+        });
+        
+        markers.push(marker);
+        
+        // InfoWindow
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div class="p-2">
+              <h3 class="font-bold">${ecoponto.nome}</h3>
+              <p class="text-sm">${ecoponto.endereco}</p>
+              <p class="text-sm mt-1"><strong>Materiais:</strong> ${ecoponto.materiais.join(', ')}</p>
+              <p class="text-sm"><strong>Horário:</strong> ${ecoponto.horario}</p>
+            </div>
+          `
+        });
+        
+        marker.addListener('click', () => {
+          infoWindow.open(map, marker);
+        });
+      });
+    }
+
+    // Renderizar lista de ecopontos
+    function renderEcopointsList() {
+      const listElement = document.getElementById('ecopoints-list');
+      listElement.innerHTML = '';
+      
+      ecopontos.forEach(ecoponto =>
